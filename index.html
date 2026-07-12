@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>모닝브루 · 예약 관리</title>
+<title>모닝브루 · 출근 전 빠른 픽업 커피</title>
 <style>
   :root{
     --bg:#f7f1e8; --card:#fffdf9; --cream:#fbf5ec;
@@ -11,24 +11,72 @@
     --accent:#c77b3c; --accent-d:#a9602a;
     --line:#e6d9c6; --text:#3a2e24; --text-dim:#8a7a68;
     --ok:#2f8f5b; --ok-bg:#e5f4ea; --err:#c0392b; --err-bg:#fbeae8;
-    --wait:#b6832b; --wait-bg:#fbf3df; --cancel:#98867a; --cancel-bg:#f0ece7;
+    --cancel:#98867a; --cancel-bg:#f0ece7;
   }
   *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
   body{
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR",sans-serif;
-    background:var(--bg);
-    background-image:radial-gradient(circle at 20% 0%,#f3e6d3 0%,transparent 45%),
-                     radial-gradient(circle at 90% 100%,#f0e3cf 0%,transparent 40%);
-    color:var(--text); line-height:1.6; min-height:100vh; padding:24px 16px 60px;
+    background:var(--bg); color:var(--text); line-height:1.6;
   }
-  .wrap{max-width:960px;margin:0 auto}
+  .wrap{max-width:960px;margin:0 auto;padding:0 16px}
+  section{padding:48px 0}
+  .sec-title{font-size:1.4rem;font-weight:800;color:var(--brown-d);margin-bottom:6px;text-align:center}
+  .sec-sub{text-align:center;color:var(--text-dim);font-size:.92rem;margin-bottom:28px}
 
-  header{text-align:center;margin-bottom:28px}
-  .logo{font-size:2rem;font-weight:800;color:var(--brown);letter-spacing:-.5px}
-  .logo span{color:var(--accent)}
-  .tagline{color:var(--text-dim);font-size:.9rem;margin-top:4px}
+  /* ── 상단 · 히어로 (Day01 소개 + PRD 가치) ── */
+  .hero{
+    text-align:center;color:#fff;padding:64px 16px 58px;
+    background:linear-gradient(135deg,#7a5638 0%,#a9602a 60%,#c77b3c 100%);
+    position:relative;overflow:hidden;
+  }
+  .hero::after{
+    content:"";position:absolute;inset:0;opacity:.12;
+    background:radial-gradient(circle at 15% 20%,#fff 0%,transparent 30%),
+               radial-gradient(circle at 85% 80%,#fff 0%,transparent 28%);
+  }
+  .hero .logo{font-size:2.6rem;font-weight:800;letter-spacing:-.5px;position:relative}
+  .hero .headline{
+    font-size:1.9rem;font-weight:800;margin:14px auto 10px;max-width:600px;
+    line-height:1.35;position:relative;
+  }
+  .hero .headline .hl{color:#ffe4c4}
+  .hero .sub{font-size:1rem;opacity:.92;max-width:520px;margin:0 auto 26px;position:relative}
+  .hero .cta{
+    display:inline-block;background:#fff;color:var(--accent-d);font-weight:800;
+    font-size:1.05rem;padding:14px 34px;border-radius:40px;text-decoration:none;
+    box-shadow:0 8px 22px rgba(0,0,0,.18);position:relative;transition:.15s;
+  }
+  .hero .cta:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(0,0,0,.25)}
+  .hero .pickup-badge{
+    display:inline-flex;gap:6px;align-items:center;margin-bottom:18px;position:relative;
+    background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);
+    padding:5px 14px;border-radius:30px;font-size:.82rem;font-weight:600;
+  }
 
-  /* 완료/성공 토스트 */
+  /* ── 중단 · 메뉴 + 영업/픽업 시간 ── */
+  .menu-sec{background:var(--cream)}
+  .menu-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+  .menu-card{
+    background:var(--card);border:1px solid var(--line);border-radius:14px;
+    padding:18px 16px;text-align:center;box-shadow:0 3px 12px rgba(111,78,55,.05);
+  }
+  .menu-card .emoji{font-size:2rem}
+  .menu-card .m-name{font-weight:700;color:var(--brown-d);margin-top:8px;font-size:.98rem}
+  .menu-card .m-desc{font-size:.78rem;color:var(--text-dim);margin:4px 0 8px;min-height:32px}
+  .menu-card .m-price{font-weight:800;color:var(--accent-d);font-size:.95rem}
+  .hours{
+    display:flex;flex-wrap:wrap;gap:14px;justify-content:center;margin-top:22px;
+  }
+  .hours .h-box{
+    background:var(--card);border:1px solid var(--line);border-radius:12px;
+    padding:14px 22px;text-align:center;min-width:200px;
+  }
+  .hours .h-label{font-size:.78rem;font-weight:700;color:var(--accent-d);letter-spacing:.03em}
+  .hours .h-value{font-weight:700;color:var(--brown-d);margin-top:4px}
+  .hours .h-note{font-size:.78rem;color:var(--text-dim);margin-top:2px}
+
+  /* ── 완료 토스트 ── */
   .toast{
     position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-20px);
     background:var(--ok);color:#fff;padding:12px 22px;border-radius:30px;
@@ -37,8 +85,8 @@
   }
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
+  /* ── 하단 · 예약 폼 + 목록 (Day03 폼 + Day04 저장) ── */
   .grid{display:grid;grid-template-columns:360px 1fr;gap:22px;align-items:start}
-
   .card{
     background:var(--card);border:1px solid var(--line);border-radius:16px;
     box-shadow:0 4px 18px rgba(111,78,55,.06);overflow:hidden;
@@ -60,7 +108,6 @@
   .card-head .btn-clear:disabled{opacity:.45;cursor:not-allowed}
   .card-body{padding:22px}
 
-  /* 폼 */
   .field{margin-bottom:16px}
   .field label{display:block;font-size:.82rem;font-weight:600;color:var(--brown);margin-bottom:6px}
   .field label .req{color:var(--accent);margin-left:2px}
@@ -85,14 +132,12 @@
   .btn-add:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 6px 16px rgba(199,123,60,.4)}
   .btn-add:disabled{opacity:.7;cursor:progress}
 
-  /* 목록 */
   #list{display:flex;flex-direction:column;gap:12px}
   .item{
     display:flex;align-items:center;gap:14px;padding:14px 16px;
     border:1px solid var(--line);border-radius:12px;background:var(--cream);
     animation:pop .3s ease;transition:background .2s,border-color .2s;
   }
-  /* 상태별 색상 (Update) */
   .item[data-status="확인완료"]{background:var(--ok-bg);border-color:#bfe3cd}
   .item[data-status="취소"]{background:var(--cancel-bg);border-color:#ddd4cc}
   .item[data-status="취소"] .info .name{text-decoration:line-through;color:var(--cancel)}
@@ -107,9 +152,9 @@
   .info .meta{font-size:.83rem;color:var(--text-dim);margin-top:2px}
   .info .meta .tag{
     display:inline-block;background:#fff;border:1px solid var(--line);
-    border-radius:14px;padding:1px 9px;margin-right:5px;color:var(--brown);font-weight:600;
+    border-radius:14px;padding:1px 9px;margin:2px 5px 0 0;color:var(--brown);font-weight:600;
   }
-  .controls{display:flex;flex-direction:column;gap:6px;flex-shrink:0;align-items:stretch}
+  .controls{display:flex;flex-direction:column;gap:6px;flex-shrink:0}
   .status-select{
     border:1px solid var(--line);border-radius:8px;padding:5px 8px;font-size:.8rem;
     font-family:inherit;font-weight:600;background:#fff;color:var(--brown-d);cursor:pointer;
@@ -123,96 +168,162 @@
   }
   .btn-del:hover{background:var(--err-bg);border-color:var(--err);color:var(--err)}
 
-  /* 빈 상태 */
   .empty{text-align:center;padding:48px 20px;color:var(--text-dim)}
   .empty .icon{font-size:3rem;margin-bottom:10px}
   .empty .title{font-weight:700;color:var(--brown);font-size:1.05rem;margin-bottom:4px}
   .empty .sub{font-size:.88rem}
+  .fake-note{text-align:center;margin-top:18px;font-size:.78rem;color:var(--text-dim)}
 
-  .note{
-    text-align:center;margin-top:22px;font-size:.8rem;color:var(--text-dim);
-    background:#fff8ee;border:1px dashed #e6d1af;border-radius:10px;padding:10px 14px;
-  }
+  /* ── 마지막 · 위치·연락 ── */
+  footer{background:var(--brown-d);color:#f3e6d3;padding:40px 16px;text-align:center}
+  footer .f-name{font-size:1.3rem;font-weight:800;color:#fff}
+  footer .f-line{font-size:.9rem;margin-top:8px;opacity:.9}
+  footer .f-copy{font-size:.75rem;margin-top:18px;opacity:.6}
 
   @media(max-width:720px){
+    .menu-grid{grid-template-columns:1fr 1fr}
     .grid{grid-template-columns:1fr}
+    .hero .headline{font-size:1.5rem}
+    .hero .logo{font-size:2.1rem}
   }
 </style>
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <div class="logo">☕ 모닝브루<span> 예약</span></div>
-    <div class="tagline">출근길 한 잔, 미리 예약하고 픽업까지 한 번에</div>
-  </header>
 
   <div id="toast" class="toast">✓ 예약이 추가되었습니다!</div>
 
-  <div class="grid">
-    <!-- 예약 입력 폼 -->
-    <section class="card">
-      <div class="card-head">📝 예약 추가</div>
-      <div class="card-body">
-        <form id="form" novalidate>
-          <div class="field" data-field>
-            <label>이름 <span class="req">*</span></label>
-            <input type="text" id="name" placeholder="예: 김테스트" autocomplete="off">
-            <div class="err-msg">필수 항목입니다</div>
-          </div>
+  <!-- ══ 상단 · 소개 + 가치 (Day01 + PRD lite) ══ -->
+  <header class="hero">
+    <div class="pickup-badge">⚡ 줄 서지 않는 픽업 예약</div>
+    <div class="logo">☕ 모닝브루</div>
+    <h1 class="headline">출근 전, <span class="hl">기다림 없이</span><br>미리 주문하고 픽업하세요</h1>
+    <p class="sub">망원동 직장인을 위한 아침 커피 — 메뉴와 픽업 시간을 미리 확인하고 예약하면, 도착과 동시에 바로 받아 갑니다.</p>
+    <a href="#reserve" class="cta">픽업 예약하기 →</a>
+  </header>
 
-          <div class="field" data-field>
-            <label>연락처 <span class="req">*</span></label>
-            <input type="tel" id="phone" placeholder="예: 010-0000-0000" autocomplete="off">
-            <div class="err-msg">필수 항목입니다</div>
-          </div>
-
-          <div class="row2">
-            <div class="field" data-field>
-              <label>픽업 시간 <span class="req">*</span></label>
-              <input type="time" id="time">
-              <div class="err-msg">필수 항목입니다</div>
-            </div>
-            <div class="field" data-field>
-              <label>인원 <span class="req">*</span></label>
-              <select id="people">
-                <option value="">선택</option>
-                <option>1명</option><option>2명</option><option>3명</option>
-                <option>4명</option><option>5명 이상</option>
-              </select>
-              <div class="err-msg">필수 항목입니다</div>
-            </div>
-          </div>
-
-          <button type="submit" class="btn-add" id="submitBtn">예약 추가</button>
-        </form>
-      </div>
-    </section>
-
-    <!-- 예약 목록 -->
-    <section class="card">
-      <div class="card-head">
-        📋 예약 목록 <span class="count" id="count">0건</span>
-        <button type="button" class="btn-clear" id="clearBtn">전체 초기화</button>
-      </div>
-      <div class="card-body">
-        <div id="list"></div>
-        <div class="empty" id="empty">
-          <div class="icon">📭</div>
-          <div class="title">아직 예약이 없습니다</div>
-          <div class="sub">첫 예약을 추가해 보세요!</div>
+  <!-- ══ 중단 · 대표 메뉴 + 영업/픽업 시간 ══ -->
+  <section class="menu-sec">
+    <div class="wrap">
+      <h2 class="sec-title">오늘의 대표 메뉴</h2>
+      <p class="sec-sub">출근길에 가장 많이 찾는 메뉴예요</p>
+      <div class="menu-grid">
+        <div class="menu-card">
+          <div class="emoji">☕</div>
+          <div class="m-name">아메리카노</div>
+          <div class="m-desc">깔끔한 산미의 하우스 블렌드</div>
+          <div class="m-price">3,500원</div>
+        </div>
+        <div class="menu-card">
+          <div class="emoji">🥛</div>
+          <div class="m-name">카페라떼</div>
+          <div class="m-desc">부드러운 우유 거품 가득</div>
+          <div class="m-price">4,500원</div>
+        </div>
+        <div class="menu-card">
+          <div class="emoji">🍦</div>
+          <div class="m-name">바닐라 라떼</div>
+          <div class="m-desc">달콤한 바닐라 시럽 추가</div>
+          <div class="m-price">5,000원</div>
+        </div>
+        <div class="menu-card">
+          <div class="emoji">🥐</div>
+          <div class="m-name">버터 크루아상</div>
+          <div class="m-desc">매일 아침 구운 갓 나온 빵</div>
+          <div class="m-price">3,800원</div>
         </div>
       </div>
-    </section>
-  </div>
+      <div class="hours">
+        <div class="h-box">
+          <div class="h-label">영업시간</div>
+          <div class="h-value">평일 07:00 – 20:00</div>
+          <div class="h-note">주말 08:00 – 18:00</div>
+        </div>
+        <div class="h-box">
+          <div class="h-label">픽업 가능 시간</div>
+          <div class="h-value">07:00 – 11:00</div>
+          <div class="h-note">출근 시간대 예약 우선 준비</div>
+        </div>
+      </div>
+    </div>
+  </section>
 
-  <p class="note">💾 예약은 이 브라우저의 저장함(localStorage)에 보관됩니다 — 새로고침하거나 브라우저를 닫았다 열어도 그대로 남습니다. (실습용 가짜 데이터만 입력하세요. 이 저장은 내 브라우저 안에서만 유지됩니다.)</p>
-</div>
+  <!-- ══ 하단 · 예약 폼 + 목록 (Day03 폼 + Day04 저장) ══ -->
+  <section id="reserve">
+    <div class="wrap">
+      <h2 class="sec-title">픽업 예약</h2>
+      <p class="sec-sub">이름·픽업 날짜·시간만 입력하면 도착 즉시 받아 갈 수 있어요</p>
+      <div class="grid">
+        <!-- 예약 입력 폼 -->
+        <div class="card">
+          <div class="card-head">📝 예약 추가</div>
+          <div class="card-body">
+            <form id="form" novalidate>
+              <div class="field" data-field>
+                <label>이름 <span class="req">*</span></label>
+                <input type="text" id="name" placeholder="예: 김테스트" autocomplete="off">
+                <div class="err-msg">필수 항목입니다</div>
+              </div>
+              <div class="field" data-field>
+                <label>연락처 <span class="req">*</span></label>
+                <input type="tel" id="phone" placeholder="예: 010-0000-0000" autocomplete="off">
+                <div class="err-msg">필수 항목입니다</div>
+              </div>
+              <div class="field" data-field>
+                <label>픽업 날짜 <span class="req">*</span></label>
+                <input type="date" id="date">
+                <div class="err-msg">필수 항목입니다</div>
+              </div>
+              <div class="row2">
+                <div class="field" data-field>
+                  <label>픽업 시간 <span class="req">*</span></label>
+                  <input type="time" id="time">
+                  <div class="err-msg">필수 항목입니다</div>
+                </div>
+                <div class="field" data-field>
+                  <label>인원 <span class="req">*</span></label>
+                  <select id="people">
+                    <option value="">선택</option>
+                    <option>1잔</option><option>2잔</option><option>3잔</option>
+                    <option>4잔</option><option>5잔 이상</option>
+                  </select>
+                  <div class="err-msg">필수 항목입니다</div>
+                </div>
+              </div>
+              <button type="submit" class="btn-add" id="submitBtn">픽업 예약하기</button>
+            </form>
+          </div>
+        </div>
+
+        <!-- 예약 목록 -->
+        <div class="card">
+          <div class="card-head">
+            📋 예약 목록 <span class="count" id="count">0건</span>
+            <button type="button" class="btn-clear" id="clearBtn">전체 초기화</button>
+          </div>
+          <div class="card-body">
+            <div id="list"></div>
+            <div class="empty" id="empty">
+              <div class="icon">📭</div>
+              <div class="title">아직 예약이 없습니다</div>
+              <div class="sub">첫 픽업 예약을 추가해 보세요!</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="fake-note">💾 예약은 이 브라우저에 저장되어 새로고침해도 유지됩니다 · 실습용 가짜 데이터만 입력하세요(실제 손님 정보 금지)</p>
+    </div>
+  </section>
+
+  <!-- ══ 마지막 · 위치·연락 ══ -->
+  <footer>
+    <div class="f-name">☕ 모닝브루</div>
+    <div class="f-line">📍 서울 마포구 망원동 · 망원역 2번 출구 도보 3분</div>
+    <div class="f-line">📞 02-000-0000 · 매일 07:00 오픈</div>
+    <div class="f-copy">© 2026 모닝브루 · 실습용 데모 페이지</div>
+  </footer>
 
 <script>
-  // localStorage 저장함 열쇠(key)
-  const STORAGE_KEY = 'reservations';
-
-  // 화면이 들고 있는 목록 (localStorage에서 불러와 채움)
+  const STORAGE_KEY = 'reservations';   // Day 04 저장 key 유지
   let reservations = load();
 
   const form   = document.getElementById('form');
@@ -226,25 +337,18 @@
   const fields = {
     name:   document.getElementById('name'),
     phone:  document.getElementById('phone'),
+    date:   document.getElementById('date'),
     time:   document.getElementById('time'),
     people: document.getElementById('people'),
   };
 
-  // ── localStorage 저장/불러오기 ─────────────────────────
-  // 배열을 JSON 글자로 포장해 저장
-  function save(){
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(reservations));
-  }
-  // 저장된 글자를 읽어 배열로 풀기 (없으면 빈 배열)
+  // ── localStorage (Day 04 코드 유지) ──
+  function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(reservations)); }
   function load(){
-    try{
-      return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-    }catch(e){
-      return [];
-    }
+    try{ return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+    catch(e){ return []; }
   }
 
-  // 시간 표기를 "오후 2시 30분" 형태로
   function formatTime(t){
     if(!t) return '';
     const [h,m] = t.split(':').map(Number);
@@ -252,26 +356,28 @@
     let hh = h % 12; if(hh === 0) hh = 12;
     return m === 0 ? `${ampm} ${hh}시` : `${ampm} ${hh}시 ${m}분`;
   }
+  function formatDate(d){
+    if(!d) return '';
+    const [y,mo,da] = d.split('-').map(Number);
+    return `${mo}월 ${da}일`;
+  }
 
   const STATUSES = ['대기중','확인완료','취소'];
 
-  // 목록 다시 그리기 — 배열을 처음부터 읽어 목록 영역을 새로 채움
   function render(){
     listEl.innerHTML = '';
     countEl.textContent = reservations.length + '건';
     clearBtn.disabled = reservations.length === 0;
 
-    if(reservations.length === 0){
-      emptyEl.style.display = 'block';   // 항목이 없으면 빈 상태 표시
-      return;
-    }
-    emptyEl.style.display = 'none';       // 항목이 있으면 빈 상태 숨김
+    if(reservations.length === 0){ emptyEl.style.display = 'block'; return; }
+    emptyEl.style.display = 'none';
 
     reservations.forEach(function(r){
       const status = r.status || '대기중';
       const options = STATUSES.map(function(s){
         return '<option'+(s===status?' selected':'')+'>'+s+'</option>';
       }).join('');
+      const dateTag = r.date ? '<span class="tag">'+formatDate(r.date)+'</span>' : '';
 
       const item = document.createElement('div');
       item.className = 'item';
@@ -281,8 +387,9 @@
         '<div class="info">' +
           '<div class="name">' + r.name + '</div>' +
           '<div class="meta">' +
-            '<span class="tag">' + r.people + '</span>' +
+            dateTag +
             '<span class="tag">' + formatTime(r.time) + '</span>' +
+            '<span class="tag">' + r.people + '</span>' +
             r.phone +
           '</div>' +
         '</div>' +
@@ -294,23 +401,20 @@
     });
   }
 
-  // 유효성 검사: 빈 칸이 있으면 막고, 각 칸 아래에 이유 표시
   function validate(){
     let ok = true;
     Object.values(fields).forEach(function(input){
       const wrap = input.closest('[data-field]');
-      if(!input.value.trim()){
-        wrap.classList.add('invalid');
-        ok = false;
-      } else {
-        wrap.classList.remove('invalid');
-      }
+      if(!input.value.trim()){ wrap.classList.add('invalid'); ok = false; }
+      else { wrap.classList.remove('invalid'); }
     });
     return ok;
   }
-
   Object.values(fields).forEach(function(input){
     input.addEventListener('input', function(){
+      input.closest('[data-field]').classList.remove('invalid');
+    });
+    input.addEventListener('change', function(){
       input.closest('[data-field]').classList.remove('invalid');
     });
   });
@@ -321,58 +425,50 @@
     setTimeout(function(){ toast.classList.remove('show'); }, 3000);
   }
 
-  // 폼 제출 — 새로고침 막고 배열에 담은 뒤 저장하고 다시 그리기 (Create)
+  // Create
   form.addEventListener('submit', function(e){
     e.preventDefault();
     if(!validate()) return;
-
     submitBtn.disabled = true;
     submitBtn.textContent = '저장 중...';
-
     setTimeout(function(){
       reservations.push({
         id: Date.now(),
         name: fields.name.value.trim(),
         phone: fields.phone.value.trim(),
+        date: fields.date.value,
         time: fields.time.value,
         people: fields.people.value,
         status: '대기중',
       });
-      save();      // localStorage에 저장
-      render();
-
+      save(); render();
       form.reset();
       submitBtn.disabled = false;
-      submitBtn.textContent = '예약 추가';
+      submitBtn.textContent = '픽업 예약하기';
       showToast('예약이 추가되었습니다!');
     }, 500);
   });
 
-  // 목록 영역 클릭 — 삭제 (Delete)
+  // Delete
   listEl.addEventListener('click', function(e){
     if(!e.target.classList.contains('btn-del')) return;
     const id = Number(e.target.dataset.id);
     const target = reservations.find(function(r){ return r.id === id; });
     if(confirm('「' + target.name + '」님의 예약을 삭제할까요?')){
       reservations = reservations.filter(function(r){ return r.id !== id; });
-      save();     // 바뀐 목록을 다시 저장해야 새로고침 후에도 삭제 유지
-      render();   // 배열이 비면 자동으로 빈 상태로 돌아감
+      save(); render();
     }
   });
 
-  // 상태 변경 — Update (드롭다운)
+  // Update (상태 변경)
   listEl.addEventListener('change', function(e){
     if(!e.target.classList.contains('status-select')) return;
     const id = Number(e.target.dataset.id);
     const target = reservations.find(function(r){ return r.id === id; });
-    if(target){
-      target.status = e.target.value;
-      save();     // 상태 변경도 저장
-      render();
-    }
+    if(target){ target.status = e.target.value; save(); render(); }
   });
 
-  // 전체 초기화 — 저장함까지 비우기
+  // 전체 초기화
   clearBtn.addEventListener('click', function(){
     if(reservations.length === 0) return;
     if(confirm('예약 ' + reservations.length + '건을 모두 삭제할까요?')){
@@ -382,7 +478,7 @@
     }
   });
 
-  render(); // 첫 화면: 저장된 값이 있으면 불러와 표시, 없으면 빈 상태 (Read)
+  render();  // 저장된 값 불러와 표시 (Read)
 </script>
 </body>
 </html>
