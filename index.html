@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>모닝브루 · 예약 관리</title>
+<style>
+  :root{
+    --bg:#f7f1e8; --card:#fffdf9; --cream:#fbf5ec;
+    --brown:#6f4e37; --brown-d:#4e3626; --brown-l:#a07d5c;
+    --accent:#c77b3c; --accent-d:#a9602a;
+    --line:#e6d9c6; --text:#3a2e24; --text-dim:#8a7a68;
+    --ok:#2f8f5b; --ok-bg:#e5f4ea; --err:#c0392b; --err-bg:#fbeae8;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR",sans-serif;
+    background:var(--bg);
+    background-image:radial-gradient(circle at 20% 0%,#f3e6d3 0%,transparent 45%),
+                     radial-gradient(circle at 90% 100%,#f0e3cf 0%,transparent 40%);
+    color:var(--text); line-height:1.6; min-height:100vh; padding:24px 16px 60px;
+  }
+  .wrap{max-width:960px;margin:0 auto}
+
+  header{text-align:center;margin-bottom:28px}
+  .logo{font-size:2rem;font-weight:800;color:var(--brown);letter-spacing:-.5px}
+  .logo span{color:var(--accent)}
+  .tagline{color:var(--text-dim);font-size:.9rem;margin-top:4px}
+
+  /* 완료/성공 토스트 */
+  .toast{
+    position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-20px);
+    background:var(--ok);color:#fff;padding:12px 22px;border-radius:30px;
+    font-weight:600;font-size:.9rem;box-shadow:0 8px 24px rgba(47,143,91,.35);
+    opacity:0;pointer-events:none;transition:.35s ease;z-index:50;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  .grid{display:grid;grid-template-columns:360px 1fr;gap:22px;align-items:start}
+
+  .card{
+    background:var(--card);border:1px solid var(--line);border-radius:16px;
+    box-shadow:0 4px 18px rgba(111,78,55,.06);overflow:hidden;
+  }
+  .card-head{
+    padding:16px 22px;background:var(--cream);border-bottom:1px solid var(--line);
+    font-weight:700;color:var(--brown-d);display:flex;align-items:center;gap:8px;
+  }
+  .card-head .count{
+    margin-left:auto;font-size:.78rem;font-weight:700;color:var(--accent-d);
+    background:#fbeeda;border:1px solid #f0d9bb;padding:2px 10px;border-radius:20px;
+  }
+  .card-body{padding:22px}
+
+  /* 폼 */
+  .field{margin-bottom:16px}
+  .field label{display:block;font-size:.82rem;font-weight:600;color:var(--brown);margin-bottom:6px}
+  .field label .req{color:var(--accent);margin-left:2px}
+  .field input,.field select{
+    width:100%;padding:11px 13px;border:1.5px solid var(--line);border-radius:10px;
+    font-size:.95rem;font-family:inherit;background:#fff;color:var(--text);transition:.15s;
+  }
+  .field input:focus,.field select:focus{
+    outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(199,123,60,.15);
+  }
+  .field.invalid input,.field.invalid select{border-color:var(--err);background:var(--err-bg)}
+  .err-msg{display:none;color:var(--err);font-size:.76rem;font-weight:600;margin-top:5px}
+  .field.invalid .err-msg{display:block}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+  .btn-add{
+    width:100%;padding:13px;border:none;border-radius:10px;cursor:pointer;
+    background:linear-gradient(135deg,var(--accent),var(--accent-d));color:#fff;
+    font-size:1rem;font-weight:700;font-family:inherit;margin-top:4px;
+    box-shadow:0 4px 12px rgba(199,123,60,.3);transition:.15s;
+  }
+  .btn-add:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 6px 16px rgba(199,123,60,.4)}
+  .btn-add:disabled{opacity:.7;cursor:progress}
+
+  /* 목록 */
+  #list{display:flex;flex-direction:column;gap:12px}
+  .item{
+    display:flex;align-items:center;gap:14px;padding:14px 16px;
+    border:1px solid var(--line);border-radius:12px;background:var(--cream);
+    animation:pop .3s ease;
+  }
+  @keyframes pop{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .avatar{
+    width:44px;height:44px;border-radius:50%;flex-shrink:0;display:flex;
+    align-items:center;justify-content:center;font-weight:800;color:#fff;font-size:1.05rem;
+    background:linear-gradient(135deg,var(--brown-l),var(--brown));
+  }
+  .info{flex:1;min-width:0}
+  .info .name{font-weight:700;color:var(--brown-d);font-size:1rem}
+  .info .meta{font-size:.83rem;color:var(--text-dim);margin-top:2px}
+  .info .meta .tag{
+    display:inline-block;background:#fff;border:1px solid var(--line);
+    border-radius:14px;padding:1px 9px;margin-right:5px;color:var(--brown);font-weight:600;
+  }
+  .btn-del{
+    flex-shrink:0;border:1px solid var(--line);background:#fff;color:var(--text-dim);
+    border-radius:8px;padding:7px 12px;font-size:.82rem;font-weight:600;cursor:pointer;
+    font-family:inherit;transition:.15s;
+  }
+  .btn-del:hover{background:var(--err-bg);border-color:var(--err);color:var(--err)}
+
+  /* 빈 상태 */
+  .empty{text-align:center;padding:48px 20px;color:var(--text-dim)}
+  .empty .icon{font-size:3rem;margin-bottom:10px}
+  .empty .title{font-weight:700;color:var(--brown);font-size:1.05rem;margin-bottom:4px}
+  .empty .sub{font-size:.88rem}
+
+  .note{
+    text-align:center;margin-top:22px;font-size:.8rem;color:var(--text-dim);
+    background:#fff8ee;border:1px dashed #e6d1af;border-radius:10px;padding:10px 14px;
+  }
+
+  @media(max-width:720px){
+    .grid{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo">☕ 모닝브루<span> 예약</span></div>
+    <div class="tagline">출근길 한 잔, 미리 예약하고 픽업까지 한 번에</div>
+  </header>
+
+  <div id="toast" class="toast">✓ 예약이 추가되었습니다!</div>
+
+  <div class="grid">
+    <!-- 예약 입력 폼 -->
+    <section class="card">
+      <div class="card-head">📝 예약 추가</div>
+      <div class="card-body">
+        <form id="form" novalidate>
+          <div class="field" data-field>
+            <label>이름 <span class="req">*</span></label>
+            <input type="text" id="name" placeholder="예: 김민지" autocomplete="off">
+            <div class="err-msg">필수 항목입니다</div>
+          </div>
+
+          <div class="field" data-field>
+            <label>연락처 <span class="req">*</span></label>
+            <input type="tel" id="phone" placeholder="예: 010-1234-5678" autocomplete="off">
+            <div class="err-msg">필수 항목입니다</div>
+          </div>
+
+          <div class="row2">
+            <div class="field" data-field>
+              <label>픽업 시간 <span class="req">*</span></label>
+              <input type="time" id="time">
+              <div class="err-msg">필수 항목입니다</div>
+            </div>
+            <div class="field" data-field>
+              <label>인원 <span class="req">*</span></label>
+              <select id="people">
+                <option value="">선택</option>
+                <option>1명</option><option>2명</option><option>3명</option>
+                <option>4명</option><option>5명 이상</option>
+              </select>
+              <div class="err-msg">필수 항목입니다</div>
+            </div>
+          </div>
+
+          <button type="submit" class="btn-add" id="submitBtn">예약 추가</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- 예약 목록 -->
+    <section class="card">
+      <div class="card-head">📋 예약 목록 <span class="count" id="count">0건</span></div>
+      <div class="card-body">
+        <div id="list"></div>
+        <div class="empty" id="empty">
+          <div class="icon">📭</div>
+          <div class="title">아직 예약이 없습니다</div>
+          <div class="sub">첫 예약을 추가해 보세요!</div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <p class="note">💡 지금은 브라우저 메모리(JavaScript 배열)에만 임시 저장됩니다 — 새로고침하면 초기화됩니다. 영구 저장은 다음 Day에서 추가합니다.</p>
+</div>
+
+<script>
+  // 화면이 열려 있는 동안만 값을 들고 있는 임시 저장소 (새로고침하면 비워짐)
+  let reservations = [];
+
+  const form   = document.getElementById('form');
+  const listEl = document.getElementById('list');
+  const emptyEl= document.getElementById('empty');
+  const countEl= document.getElementById('count');
+  const toast  = document.getElementById('toast');
+  const submitBtn = document.getElementById('submitBtn');
+
+  const fields = {
+    name:   document.getElementById('name'),
+    phone:  document.getElementById('phone'),
+    time:   document.getElementById('time'),
+    people: document.getElementById('people'),
+  };
+
+  // 시간 표기를 "오후 2시 30분" 형태로
+  function formatTime(t){
+    if(!t) return '';
+    const [h,m] = t.split(':').map(Number);
+    const ampm = h < 12 ? '오전' : '오후';
+    let hh = h % 12; if(hh === 0) hh = 12;
+    return m === 0 ? `${ampm} ${hh}시` : `${ampm} ${hh}시 ${m}분`;
+  }
+
+  // 목록 다시 그리기 — 배열을 처음부터 읽어 목록 영역을 새로 채움
+  function render(){
+    listEl.innerHTML = '';
+    countEl.textContent = reservations.length + '건';
+
+    if(reservations.length === 0){
+      emptyEl.style.display = 'block';   // 항목이 없으면 빈 상태 표시
+      return;
+    }
+    emptyEl.style.display = 'none';       // 항목이 있으면 빈 상태 숨김
+
+    reservations.forEach(function(r){
+      const item = document.createElement('div');
+      item.className = 'item';
+      item.innerHTML =
+        '<div class="avatar">' + r.name.charAt(0) + '</div>' +
+        '<div class="info">' +
+          '<div class="name">' + r.name + '</div>' +
+          '<div class="meta">' +
+            '<span class="tag">' + r.people + '</span>' +
+            '<span class="tag">' + formatTime(r.time) + '</span>' +
+            r.phone +
+          '</div>' +
+        '</div>' +
+        '<button class="btn-del" data-id="' + r.id + '">삭제</button>';
+      listEl.appendChild(item);
+    });
+  }
+
+  // 유효성 검사: 빈 칸이 있으면 막고, 각 칸 아래에 이유 표시
+  function validate(){
+    let ok = true;
+    Object.values(fields).forEach(function(input){
+      const wrap = input.closest('[data-field]');
+      if(!input.value.trim()){
+        wrap.classList.add('invalid');
+        ok = false;
+      } else {
+        wrap.classList.remove('invalid');
+      }
+    });
+    return ok;
+  }
+
+  // 입력 시 오류 표시 즉시 해제
+  Object.values(fields).forEach(function(input){
+    input.addEventListener('input', function(){
+      input.closest('[data-field]').classList.remove('invalid');
+    });
+  });
+
+  function showToast(msg){
+    toast.textContent = '✓ ' + msg;
+    toast.classList.add('show');
+    setTimeout(function(){ toast.classList.remove('show'); }, 3000);
+  }
+
+  // 폼 제출 — 새로고침 막고(preventDefault) 배열에 담은 뒤 다시 그리기
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+    if(!validate()) return;
+
+    // 처리 중 → 완료 피드백
+    submitBtn.disabled = true;
+    submitBtn.textContent = '저장 중...';
+
+    setTimeout(function(){
+      reservations.push({
+        id: Date.now(),
+        name: fields.name.value.trim(),
+        phone: fields.phone.value.trim(),
+        time: fields.time.value,
+        people: fields.people.value,
+      });
+      render();
+
+      form.reset();
+      submitBtn.disabled = false;
+      submitBtn.textContent = '예약 추가';
+      showToast('예약이 추가되었습니다!');
+    }, 500);
+  });
+
+  // 삭제 — 확인 후 배열에서 한 칸 빼고 다시 그리기
+  listEl.addEventListener('click', function(e){
+    if(!e.target.classList.contains('btn-del')) return;
+    const id = Number(e.target.dataset.id);
+    const target = reservations.find(function(r){ return r.id === id; });
+    if(confirm('「' + target.name + '」님의 예약을 삭제할까요?')){
+      reservations = reservations.filter(function(r){ return r.id !== id; });
+      render();  // 배열이 비면 자동으로 빈 상태로 돌아감
+    }
+  });
+
+  render(); // 첫 화면: 빈 상태 표시
+</script>
+</body>
+</html>
