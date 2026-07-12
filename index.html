@@ -11,6 +11,7 @@
     --accent:#c77b3c; --accent-d:#a9602a;
     --line:#e6d9c6; --text:#3a2e24; --text-dim:#8a7a68;
     --ok:#2f8f5b; --ok-bg:#e5f4ea; --err:#c0392b; --err-bg:#fbeae8;
+    --wait:#b6832b; --wait-bg:#fbf3df; --cancel:#98867a; --cancel-bg:#f0ece7;
   }
   *{box-sizing:border-box;margin:0;padding:0}
   body{
@@ -47,9 +48,16 @@
     font-weight:700;color:var(--brown-d);display:flex;align-items:center;gap:8px;
   }
   .card-head .count{
-    margin-left:auto;font-size:.78rem;font-weight:700;color:var(--accent-d);
+    font-size:.78rem;font-weight:700;color:var(--accent-d);
     background:#fbeeda;border:1px solid #f0d9bb;padding:2px 10px;border-radius:20px;
   }
+  .card-head .btn-clear{
+    margin-left:auto;border:1px solid var(--line);background:#fff;color:var(--text-dim);
+    border-radius:8px;padding:5px 12px;font-size:.78rem;font-weight:600;cursor:pointer;
+    font-family:inherit;transition:.15s;
+  }
+  .card-head .btn-clear:hover:not(:disabled){background:var(--err-bg);border-color:var(--err);color:var(--err)}
+  .card-head .btn-clear:disabled{opacity:.45;cursor:not-allowed}
   .card-body{padding:22px}
 
   /* 폼 */
@@ -82,8 +90,12 @@
   .item{
     display:flex;align-items:center;gap:14px;padding:14px 16px;
     border:1px solid var(--line);border-radius:12px;background:var(--cream);
-    animation:pop .3s ease;
+    animation:pop .3s ease;transition:background .2s,border-color .2s;
   }
+  /* 상태별 색상 (Update) */
+  .item[data-status="확인완료"]{background:var(--ok-bg);border-color:#bfe3cd}
+  .item[data-status="취소"]{background:var(--cancel-bg);border-color:#ddd4cc}
+  .item[data-status="취소"] .info .name{text-decoration:line-through;color:var(--cancel)}
   @keyframes pop{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
   .avatar{
     width:44px;height:44px;border-radius:50%;flex-shrink:0;display:flex;
@@ -97,9 +109,16 @@
     display:inline-block;background:#fff;border:1px solid var(--line);
     border-radius:14px;padding:1px 9px;margin-right:5px;color:var(--brown);font-weight:600;
   }
+  .controls{display:flex;flex-direction:column;gap:6px;flex-shrink:0;align-items:stretch}
+  .status-select{
+    border:1px solid var(--line);border-radius:8px;padding:5px 8px;font-size:.8rem;
+    font-family:inherit;font-weight:600;background:#fff;color:var(--brown-d);cursor:pointer;
+  }
+  .item[data-status="확인완료"] .status-select{color:var(--ok);border-color:#bfe3cd}
+  .item[data-status="취소"] .status-select{color:var(--cancel)}
   .btn-del{
-    flex-shrink:0;border:1px solid var(--line);background:#fff;color:var(--text-dim);
-    border-radius:8px;padding:7px 12px;font-size:.82rem;font-weight:600;cursor:pointer;
+    border:1px solid var(--line);background:#fff;color:var(--text-dim);
+    border-radius:8px;padding:5px 12px;font-size:.8rem;font-weight:600;cursor:pointer;
     font-family:inherit;transition:.15s;
   }
   .btn-del:hover{background:var(--err-bg);border-color:var(--err);color:var(--err)}
@@ -137,13 +156,13 @@
         <form id="form" novalidate>
           <div class="field" data-field>
             <label>이름 <span class="req">*</span></label>
-            <input type="text" id="name" placeholder="예: 김민지" autocomplete="off">
+            <input type="text" id="name" placeholder="예: 김테스트" autocomplete="off">
             <div class="err-msg">필수 항목입니다</div>
           </div>
 
           <div class="field" data-field>
             <label>연락처 <span class="req">*</span></label>
-            <input type="tel" id="phone" placeholder="예: 010-1234-5678" autocomplete="off">
+            <input type="tel" id="phone" placeholder="예: 010-0000-0000" autocomplete="off">
             <div class="err-msg">필수 항목입니다</div>
           </div>
 
@@ -171,7 +190,10 @@
 
     <!-- 예약 목록 -->
     <section class="card">
-      <div class="card-head">📋 예약 목록 <span class="count" id="count">0건</span></div>
+      <div class="card-head">
+        📋 예약 목록 <span class="count" id="count">0건</span>
+        <button type="button" class="btn-clear" id="clearBtn">전체 초기화</button>
+      </div>
       <div class="card-body">
         <div id="list"></div>
         <div class="empty" id="empty">
@@ -183,12 +205,15 @@
     </section>
   </div>
 
-  <p class="note">💡 지금은 브라우저 메모리(JavaScript 배열)에만 임시 저장됩니다 — 새로고침하면 초기화됩니다. 영구 저장은 다음 Day에서 추가합니다.</p>
+  <p class="note">💾 예약은 이 브라우저의 저장함(localStorage)에 보관됩니다 — 새로고침하거나 브라우저를 닫았다 열어도 그대로 남습니다. (실습용 가짜 데이터만 입력하세요. 이 저장은 내 브라우저 안에서만 유지됩니다.)</p>
 </div>
 
 <script>
-  // 화면이 열려 있는 동안만 값을 들고 있는 임시 저장소 (새로고침하면 비워짐)
-  let reservations = [];
+  // localStorage 저장함 열쇠(key)
+  const STORAGE_KEY = 'reservations';
+
+  // 화면이 들고 있는 목록 (localStorage에서 불러와 채움)
+  let reservations = load();
 
   const form   = document.getElementById('form');
   const listEl = document.getElementById('list');
@@ -196,6 +221,7 @@
   const countEl= document.getElementById('count');
   const toast  = document.getElementById('toast');
   const submitBtn = document.getElementById('submitBtn');
+  const clearBtn  = document.getElementById('clearBtn');
 
   const fields = {
     name:   document.getElementById('name'),
@@ -203,6 +229,20 @@
     time:   document.getElementById('time'),
     people: document.getElementById('people'),
   };
+
+  // ── localStorage 저장/불러오기 ─────────────────────────
+  // 배열을 JSON 글자로 포장해 저장
+  function save(){
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(reservations));
+  }
+  // 저장된 글자를 읽어 배열로 풀기 (없으면 빈 배열)
+  function load(){
+    try{
+      return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+    }catch(e){
+      return [];
+    }
+  }
 
   // 시간 표기를 "오후 2시 30분" 형태로
   function formatTime(t){
@@ -213,10 +253,13 @@
     return m === 0 ? `${ampm} ${hh}시` : `${ampm} ${hh}시 ${m}분`;
   }
 
+  const STATUSES = ['대기중','확인완료','취소'];
+
   // 목록 다시 그리기 — 배열을 처음부터 읽어 목록 영역을 새로 채움
   function render(){
     listEl.innerHTML = '';
     countEl.textContent = reservations.length + '건';
+    clearBtn.disabled = reservations.length === 0;
 
     if(reservations.length === 0){
       emptyEl.style.display = 'block';   // 항목이 없으면 빈 상태 표시
@@ -225,8 +268,14 @@
     emptyEl.style.display = 'none';       // 항목이 있으면 빈 상태 숨김
 
     reservations.forEach(function(r){
+      const status = r.status || '대기중';
+      const options = STATUSES.map(function(s){
+        return '<option'+(s===status?' selected':'')+'>'+s+'</option>';
+      }).join('');
+
       const item = document.createElement('div');
       item.className = 'item';
+      item.dataset.status = status;
       item.innerHTML =
         '<div class="avatar">' + r.name.charAt(0) + '</div>' +
         '<div class="info">' +
@@ -237,7 +286,10 @@
             r.phone +
           '</div>' +
         '</div>' +
-        '<button class="btn-del" data-id="' + r.id + '">삭제</button>';
+        '<div class="controls">' +
+          '<select class="status-select" data-id="' + r.id + '">' + options + '</select>' +
+          '<button class="btn-del" data-id="' + r.id + '">삭제</button>' +
+        '</div>';
       listEl.appendChild(item);
     });
   }
@@ -257,7 +309,6 @@
     return ok;
   }
 
-  // 입력 시 오류 표시 즉시 해제
   Object.values(fields).forEach(function(input){
     input.addEventListener('input', function(){
       input.closest('[data-field]').classList.remove('invalid');
@@ -270,12 +321,11 @@
     setTimeout(function(){ toast.classList.remove('show'); }, 3000);
   }
 
-  // 폼 제출 — 새로고침 막고(preventDefault) 배열에 담은 뒤 다시 그리기
+  // 폼 제출 — 새로고침 막고 배열에 담은 뒤 저장하고 다시 그리기 (Create)
   form.addEventListener('submit', function(e){
     e.preventDefault();
     if(!validate()) return;
 
-    // 처리 중 → 완료 피드백
     submitBtn.disabled = true;
     submitBtn.textContent = '저장 중...';
 
@@ -286,7 +336,9 @@
         phone: fields.phone.value.trim(),
         time: fields.time.value,
         people: fields.people.value,
+        status: '대기중',
       });
+      save();      // localStorage에 저장
       render();
 
       form.reset();
@@ -296,18 +348,41 @@
     }, 500);
   });
 
-  // 삭제 — 확인 후 배열에서 한 칸 빼고 다시 그리기
+  // 목록 영역 클릭 — 삭제 (Delete)
   listEl.addEventListener('click', function(e){
     if(!e.target.classList.contains('btn-del')) return;
     const id = Number(e.target.dataset.id);
     const target = reservations.find(function(r){ return r.id === id; });
     if(confirm('「' + target.name + '」님의 예약을 삭제할까요?')){
       reservations = reservations.filter(function(r){ return r.id !== id; });
-      render();  // 배열이 비면 자동으로 빈 상태로 돌아감
+      save();     // 바뀐 목록을 다시 저장해야 새로고침 후에도 삭제 유지
+      render();   // 배열이 비면 자동으로 빈 상태로 돌아감
     }
   });
 
-  render(); // 첫 화면: 빈 상태 표시
+  // 상태 변경 — Update (드롭다운)
+  listEl.addEventListener('change', function(e){
+    if(!e.target.classList.contains('status-select')) return;
+    const id = Number(e.target.dataset.id);
+    const target = reservations.find(function(r){ return r.id === id; });
+    if(target){
+      target.status = e.target.value;
+      save();     // 상태 변경도 저장
+      render();
+    }
+  });
+
+  // 전체 초기화 — 저장함까지 비우기
+  clearBtn.addEventListener('click', function(){
+    if(reservations.length === 0) return;
+    if(confirm('예약 ' + reservations.length + '건을 모두 삭제할까요?')){
+      reservations = [];
+      localStorage.removeItem(STORAGE_KEY);
+      render();
+    }
+  });
+
+  render(); // 첫 화면: 저장된 값이 있으면 불러와 표시, 없으면 빈 상태 (Read)
 </script>
 </body>
 </html>
