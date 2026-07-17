@@ -3,7 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>모닝브루 · 출근 전 빠른 픽업 커피</title>
+<title>망원동 직접 로스팅 카페 모닝브루 | 출근 전 빠른 원두커피 테이크아웃 픽업 예약 가능</title>
+<meta name="description" content="서울 마포구 망원동 직접 로스팅 카페 모닝브루입니다. 매일 아침 직접 볶은 원두로 내린 커피를 출근 전 미리 주문하면 평균 5분 이내에 픽업할 수 있어요. 아메리카노·라떼·바닐라라떼·크루아상까지 테이크아웃 예약을 온라인으로 간편하게. 망원역 2번 출구 도보 3분, 평일 오전 7시 오픈.">
+<meta name="keywords" content="망원동 카페, 직접 로스팅 카페, 테이크아웃 예약, 망원동 커피, 출근 전 커피 픽업">
+<link rel="canonical" href="https://morningbrew-reservation.vercel.app/">
+<!-- Open Graph (SNS·AI 검색 공유용) -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="망원동 직접 로스팅 카페 모닝브루 | 출근 전 테이크아웃 픽업 예약">
+<meta property="og:description" content="망원동에서 매일 직접 로스팅한 원두로 내리는 커피. 출근 전 온라인으로 미리 주문하면 평균 5분 이내 픽업. 아메리카노·라떼·크루아상 테이크아웃 예약 가능.">
+<meta property="og:url" content="https://morningbrew-reservation.vercel.app/">
 <style>
   :root{
     --bg:#f7f1e8; --card:#fffdf9; --cream:#fbf5ec;
@@ -41,6 +49,7 @@
     line-height:1.35;position:relative;
   }
   .hero .headline .hl{color:#ffe4c4}
+  .hero .lead{font-size:1.15rem;font-weight:600;margin:2px auto 12px;opacity:.96;position:relative}
   .hero .sub{font-size:1rem;opacity:.92;max-width:520px;margin:0 auto 26px;position:relative}
   .hero .cta{
     display:inline-block;background:#fff;color:var(--accent-d);font-weight:800;
@@ -53,6 +62,14 @@
     background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);
     padding:5px 14px;border-radius:30px;font-size:.82rem;font-weight:600;
   }
+
+  /* ── 소개 (GEO 단락) ── */
+  .about{padding:44px 0 20px}
+  .about .geo{
+    max-width:720px;margin:0 auto;text-align:center;font-size:1.02rem;line-height:1.85;
+    color:var(--text);
+  }
+  .about .geo strong{color:var(--accent-d);font-weight:700}
 
   /* ── 중단 · 메뉴 + 영업/픽업 시간 ── */
   .menu-sec{background:var(--cream)}
@@ -196,10 +213,23 @@
   <header class="hero">
     <div class="pickup-badge">⚡ 줄 서지 않는 픽업 예약</div>
     <div class="logo">☕ 모닝브루</div>
-    <h1 class="headline">출근 전, <span class="hl">기다림 없이</span><br>미리 주문하고 픽업하세요</h1>
-    <p class="sub">망원동 직장인을 위한 아침 커피 — 메뉴와 픽업 시간을 미리 확인하고 예약하면, 도착과 동시에 바로 받아 갑니다.</p>
+    <h1 class="headline">망원동 <span class="hl">직접 로스팅</span> 카페<br>모닝브루</h1>
+    <p class="lead">출근 전, 기다림 없이 미리 주문하고 픽업하세요</p>
+    <p class="sub">망원동 직장인을 위한 아침 커피 — 매일 직접 로스팅한 원두로 내린 커피를 온라인 테이크아웃 예약하면, 평균 5분 이내로 도착과 동시에 받아 갑니다.</p>
     <a href="#reserve" class="cta">픽업 예약하기 →</a>
   </header>
+
+  <!-- ══ 소개 · GEO 단락 (주장 + 근거 + 수치) ══ -->
+  <section class="about">
+    <div class="wrap">
+      <h2 class="sec-title">모닝브루 소개</h2>
+      <p class="geo">
+        <strong>모닝브루</strong>는 서울 마포구 <strong>망원동</strong>에 자리한 <strong>직접 로스팅 카페</strong>로, 매일 아침 갓 볶은 원두로 커피를 내립니다.
+        평일 오전 7시부터 오후 8시까지 영업하며, 온라인으로 미리 주문하면 <strong>평균 5분 이내</strong>에 픽업할 수 있어 출근 전 빠르게 커피가 필요한 직장인에게 적합합니다.
+        아메리카노 3,500원부터 라떼·크루아상까지 <strong>테이크아웃 예약</strong>이 가능하며, 망원역 2번 출구에서 도보 3분 거리입니다.
+      </p>
+    </div>
+  </section>
 
   <!-- ══ 중단 · 대표 메뉴 + 영업/픽업 시간 ══ -->
   <section class="menu-sec">
